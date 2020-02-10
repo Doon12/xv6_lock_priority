@@ -473,6 +473,16 @@ wakeup(void *chan)
   release(&ptable.lock);
 }
 
+// Wake up process p.
+// The ptable lock must be held.
+void
+wakeup_p(struct proc* p)
+{
+  acquire(&ptable.lock);
+  p->state = RUNNABLE;
+  release(&ptable.lock);
+}
+
 // Kill the process with the given pid.
 // Process won't exit until it returns
 // to user space (see trap in trap.c).

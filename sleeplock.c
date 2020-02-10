@@ -17,17 +17,33 @@ initsleeplock(struct sleeplock *lk, char *name)
   lk->name = name;
   lk->locked = 0;
   lk->pid = 0;
+  lk->head = 0; /* Initialize head of waiter queue. */
 }
 
 void
 acquiresleep(struct sleeplock *lk)
 {
   acquire(&lk->lk);
-  while (lk->locked) {
-    sleep(lk, &lk->lk);
-  }
-  lk->locked = 1;
-  lk->pid = myproc()->pid;
+  
+  if (lk->locked)
+	{
+	  /* If lock is acquired, push current process to head of queue.
+	   */	  
+	  struct proc* head = lk->head;
+	  myproc()->next = head;
+	  lk->head = myproc();
+	  /* Next, sleep the process. */
+	  sleep(lk, &lk->lk);
+	}
+  else
+	{
+	  /* If lock has no holder, set locked, and pid as of current process.
+	   */
+	  lk->head = 0;
+	  lk->locked = 1;
+	  lk->pid = myproc()->pid;
+	}
+
   release(&lk->lk);
 }
 
@@ -35,9 +51,36 @@ void
 releasesleep(struct sleeplock *lk)
 {
   acquire(&lk->lk);
-  lk->locked = 0;
-  lk->pid = 0;
-  wakeup(lk);
+ 
+  struct proc* tail; // tail of waiter queue.
+  struct proc* prev_tail; // process before the tail of waiter queue.
+  
+  tail = lk->head;
+  prev_tail = 0;
+
+  if (tail)
+	{
+	  /* Set tail to the end of the queue.*/
+	  while (tail->next)
+		{
+		  prev_tail = tail;
+		  tail = tail->next;
+		}
+	  /* Get rid of the tail from the queue, and wake up the process. */
+	  if (prev_tail)
+		prev_tail->next = 0;
+	  else
+		lk->head = 0;
+	  lk->pid = tail->pid;
+	  wakeup_p(tail);
+	}
+  else
+	{
+	  /* when queue is empty */
+	  lk->locked = 0;
+	  lk->pid = 0;
+	}
+
   release(&lk->lk);
 }
 
