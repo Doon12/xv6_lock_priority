@@ -39,7 +39,6 @@ acquiresleep(struct sleeplock *lk)
 	{
 	  /* If lock has no holder, set locked, and pid as of current process.
 	   */
-	  lk->head = 0;
 	  lk->locked = 1;
 	  lk->pid = myproc()->pid;
 	}
