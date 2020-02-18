@@ -34,18 +34,9 @@ acquiresleep(struct sleeplock *lk)
 	  lk->head = myproc();
 	  /* Next, sleep the process. */
 	  sleep(lk, &lk->lk);
-	  /* waked up and set locked. */
-	  lk->locked = 1;
-	  lk->pid = myproc()->pid;
-
 	}
-  else
-	{
-	  /* If lock has no holder, set locked, and pid as of current process.
-	   */
-	  lk->locked = 1;
-	  lk->pid = myproc()->pid;
-	}
+  lk->locked = 1;
+  lk->pid = myproc()->pid;
 
   release(&lk->lk);
 }
@@ -76,6 +67,7 @@ releasesleep(struct sleeplock *lk)
 		lk->head = 0;
 	  lk->locked = 0;
 	  lk->pid = 0;
+	  /* wakeup tail */
 	  wakeup_p(tail);
 	}
   else
@@ -84,7 +76,6 @@ releasesleep(struct sleeplock *lk)
 	  lk->locked = 0;
 	  lk->pid = 0;
 	}
-
   release(&lk->lk);
 }
 
