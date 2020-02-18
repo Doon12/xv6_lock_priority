@@ -6,7 +6,7 @@ int
 main()
 {
   int proc_num = 10;
-  int sleep_total = 1000;
+  int sleep_total = 10;
   int i, pid;
 
   testlock();

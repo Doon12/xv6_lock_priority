@@ -25,9 +25,10 @@ acquiresleep(struct sleeplock *lk)
 {
   acquire(&lk->lk);
   
-  if (lk->locked)
+  if (lk->locked || lk->head)
 	{
-	  /* If lock is acquired, push current process to head of queue.
+	  /* If lock is acquired or waiting queue is not empty,
+		 push current process to head of queue.
 	   */	  
 	  struct proc* head = lk->head;
 	  myproc()->next = head;
@@ -35,6 +36,7 @@ acquiresleep(struct sleeplock *lk)
 	  /* Next, sleep the process. */
 	  sleep(lk, &lk->lk);
 	}
+  // now, lock is acquired.
   lk->locked = 1;
   lk->pid = myproc()->pid;
 
